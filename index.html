@@ -1,274 +1,129 @@
-<!doctype html>
-<html lang="bn">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Banking Chat Simulator — Sumanta Chatterjee</title>
-  <style>
-    :root{--green:#075e54;--wh:#ffffff;--muted:#6b6b6b;--bg:#f0f2f1}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;background:var(--bg);color:#111}
-    header{background:var(--green);color:var(--wh);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-    header h1{font-size:16px;margin:0}
-    header .meta{font-size:13px;opacity:.95}
-
-    .wrap{max-width:1100px;margin:18px auto;padding:12px;display:grid;grid-template-columns:1fr 320px;gap:16px}
-
-    /* Chat panel */
-    .chat-panel{background:var(--wh);border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.06);display:flex;flex-direction:column;height:76vh}
-    .chat-top{padding:12px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:12px}
-    .avatar{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
-    .title{font-weight:700}
-    .sub{font-size:13px;color:var(--muted)}
-
-    .chat-body{flex:1;padding:14px;overflow:auto;background:linear-gradient(180deg, #ffffff, #f7f9f8)}
-    .note{background:#fffbe6;border-left:4px solid #ffd54a;padding:10px;border-radius:8px;margin-bottom:10px;color:#5b4a00}
-
-    .chat-window{display:flex;flex-direction:column;gap:10px}
-    .bubble{max-width:78%;padding:10px 12px;border-radius:12px;background:#f1f0f0}
-    .bubble.me{margin-left:auto;background:#dcf8c6}
-
-    .chat-footer{padding:12px;border-top:1px solid #eee;background:#fff;display:flex;gap:8px;align-items:center}
-    .join-btn{background:#25D366;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
-
-    /* Right panel */
-    .side{display:flex;flex-direction:column;gap:12px}
-    .card{background:var(--wh);padding:12px;border-radius:10px;box-shadow:0 6px 14px rgba(0,0,0,.04)}
-    .small{font-size:13px;color:var(--muted)}
-    .chip{display:inline-block;padding:6px 8px;border-radius:999px;background:#eef7f4;color:#05604a;font-weight:700}
-
-    /* category / gallery */
-    .controls{display:flex;gap:8px;margin-bottom:8px}
-    .controls button{flex:1;padding:8px;border-radius:8px;border:1px solid #e6e6e6;background:#fff;cursor:pointer}
-    .controls button.active{background:#128C7E;color:#fff;border-color:transparent}
-
-    .gallery{height:46vh;border-radius:8px;background:#fafafa;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:8px}
-    .imgframe{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#fff;overflow:hidden}
-    .imgframe img{max-width:100%;max-height:100%;object-fit:contain}
-
-    .uploader{display:flex;gap:8px}
-    input[type=file]{display:block}
-
-    /* modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center}
-    .modal.show{display:flex}
-    .modal .box{background:#fff;padding:14px;border-radius:10px;width:420px;max-width:94%}
-    .modal h3{margin:0 0 10px}
-    .form-row{margin-bottom:10px}
-    input,select,button{font-size:14px}
-    input[type=text],input[type=tel],select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e6e6}
-    .btn{background:#128C7E;color:#fff;padding:10px;border-radius:8px;border:none;cursor:pointer}
-
-    footer{max-width:1100px;margin:12px auto;text-align:center;color:var(--muted);font-size:13px}
-
-    /* responsive */
-    @media (max-width:900px){.wrap{grid-template-columns:1fr}.side{order:2}.chat-panel{height:62vh}}
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Sumanta Chatterjee — Banking Question Viewer</h1>
-    <div class="meta">Group Capacity: <span class="chip">1,000 slots</span></div>
-  </header>
-
-  <div class="wrap">
-    <!-- LEFT: Chat / Viewer -->
-    <div class="chat-panel" role="main">
-      <div class="chat-top">
-        <div class="avatar">SC</div>
-        <div>
-          <div class="title">Banking Doubt Viewer</div>
-          <div class="sub">Questions are shown as images. Join to request access.</div>
-        </div>
-      </div>
-
-      <div class="chat-body" id="chatBody">
-        <div class="note">English text here English text here WhatsApp English text here English text here English text here English text here — English text here English text here English text here, English text here English text here English text here English text here English text here English text here English text here English text here।</div>
-        <div class="chat-window" id="chatWindow">
-          <!-- Empty by default - no fake messages shown -->
-          <div class="bubble">Welcome! Use the panel on the right to choose question level and start the slideshow.</div>
-        </div>
-      </div>
-
-      <div class="chat-footer">
-        <button class="join-btn" id="openJoin">Join / Request Access</button>
-        <div class="small">After request, click the button to message Sumanta for approval.</div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Controls & Gallery -->
-    <div class="side">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <div>
-            <div style="font-weight:700">Question Level</div>
-            <div class="small">Choose category to start slideshow</div>
-          </div>
-          <div class="small">Auto-rotate</div>
-        </div>
-
-        <div class="controls" style="margin-top:10px">
-          <button id="btnEasy">Easy</button>
-          <button id="btnMod">Moderate</button>
-          <button id="btnHard">Hard</button>
-        </div>
-
-        <div class="small" style="margin-top:8px">Upload question images for each category (optional). If none uploaded, placeholders are used.</div>
-      </div>
-
-      <div class="card gallery">
-        <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:700">Question Preview</div>
-          <div class="small">Use arrows or autoplay</div>
-        </div>
-
-        <div class="imgframe" id="imgFrame">
-          <img id="previewImg" alt="Question image preview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='500'><rect width='100%' height='100%' fill='%23ffffff'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='24' fill='%23999'>No questions uploaded.<tspan x='50%' dy='40' font-size='18' fill='%23bbb'>Use the buttons to start with sample images.</tspan></text></svg>" />
-        </div>
-
-        <div style="width:100%;display:flex;gap:8px;margin-top:8px;align-items:center">
-          <button id="prevBtn" style="flex:0 0 44px;border-radius:8px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">◀</button>
-          <button id="nextBtn" style="flex:1;border-radius:8px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">Next</button>
-          <button id="playBtn" style="flex:0 0 44px;border-radius:8px;border:1px solid #e6e6e6;background:#fff;cursor:pointer">▶</button>
-        </div>
-
-        <div style="width:100%;margin-top:8px;display:flex;flex-direction:column;gap:8px">
-          <label class="small">Upload (Easy)</label>
-          <input type="file" id="upEasy" accept="image/*" multiple />
-          <label class="small">Upload (Moderate)</label>
-          <input type="file" id="upMod" accept="image/*" multiple />
-          <label class="small">Upload (Hard)</label>
-          <input type="file" id="upHard" accept="image/*" multiple />
-        </div>
-
-      </div>
-
-      <div class="card">
-        <div style="font-weight:700">How to approve members</div>
-        <div class="small" style="margin-top:6px">When someone requests to join, they will be asked to message you on WhatsApp. You must manually approve via your admin process (not in this demo).</div>
-        <div style="margin-top:8px"><strong>WhatsApp to contact:</strong> <div class="small">+91 78660 70549</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Join Modal -->
-  <div class="modal" id="joinModal" aria-hidden="true">
-    <div class="box">
-      <h3>Join Group — Request Access</h3>
-      <div class="form-row">
-        <label class="small">English text here English text here</label>
-        <input type="text" id="reqName" placeholder="English text here English text here" />
-      </div>
-      <div class="form-row">
-        <label class="small">WhatsApp English text here (English text here English text here English text here — 919...) </label>
-        <input type="tel" id="reqWhats" placeholder="e.g. 919876543210" />
-      </div>
-
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <button id="closeJoin" class="btn" style="background:#eee;color:#111;">Close</button>
-        <button id="sendReq" class="btn">Send WhatsApp Request</button>
-      </div>
-
-      <p class="small" style="margin-top:10px;color:var(--muted)">English text here: Join request English text here English text here WhatsApp English text here English text here English text here English text here English text here English text here_APPROVE English text here।</p>
-    </div>
-  </div>
-
-  <footer>
-    <div>Demo viewer — images only. No fake chats or fake members are created.</div>
-  </footer>
-
-  <script>
-    // --- Config
-    const SUMANTA = '917866070549'; // wa.me expects country code without +
-
-    // --- Sample placeholder images (data URI SVGs with text) for each difficulty
-    const sampleEasy = [
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23ffffff"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%23111">Easy Q1: Fill in the blank</text></svg>',
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23ffffff"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%23111">Easy Q2: Synonym</text></svg>'
-    ];
-    const sampleMod = [
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23fffdf6"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%230b3">Moderate Q1: Para-jumble</text></svg>',
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23fffdf6"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%230b3">Moderate Q2: DI basic</text></svg>'
-    ];
-    const sampleHard = [
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23fffaf8"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%23700">Hard Q1: Puzzle</text></svg>',
-      'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23fffaf8"/><text x="50%" y="40%" font-size="36" text-anchor="middle" fill="%23700">Hard Q2: Advanced DI</text></svg>'
-    ];
-
-    // --- State
-    let easyImgs = [...sampleEasy];
-    let modImgs = [...sampleMod];
-    let hardImgs = [...sampleHard];
-
-    let currentList = easyImgs;
-    let idx = 0;
-    let autoplay = false;
-    let timer = null;
-
-    const preview = document.getElementById('previewImg');
-    const btnEasy = document.getElementById('btnEasy');
-    const btnMod = document.getElementById('btnMod');
-    const btnHard = document.getElementById('btnHard');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const playBtn = document.getElementById('playBtn');
-    const upEasy = document.getElementById('upEasy');
-    const upMod = document.getElementById('upMod');
-    const upHard = document.getElementById('upHard');
-
-    function setActiveButton(b){[btnEasy,btnMod,btnHard].forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-
-    function showImageList(list){
-      if(!list || list.length===0){ preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="%23fff"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="28" fill="%23999">No images in this category. Upload images or use sample ones.</text></svg>' ; return; }
-      idx = idx % list.length;
-      if(idx<0) idx = 0;
-      preview.src = list[idx];
+<meta charset="UTF-8">
+<title>Sumantosh Doubt Clinic</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #e5ddd5;
+        margin: 0;
+        padding: 0;
     }
 
-    function startAutoplay(){ if(timer) clearInterval(timer); timer = setInterval(()=>{ idx = (idx+1) % currentList.length; showImageList(currentList); }, 4000); autoplay=true; playBtn.textContent='■'; }
-    function stopAutoplay(){ if(timer) clearInterval(timer); timer=null; autoplay=false; playBtn.textContent='▶'; }
+    .header {
+        background: #128c7e;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+    }
 
-    btnEasy.addEventListener('click', ()=>{ currentList = easyImgs; setActiveButton(btnEasy); idx=0; showImageList(currentList); });
-    btnMod.addEventListener('click', ()=>{ currentList = modImgs; setActiveButton(btnMod); idx=0; showImageList(currentList); });
-    btnHard.addEventListener('click', ()=>{ currentList = hardImgs; setActiveButton(btnHard); idx=0; showImageList(currentList); });
+    .top-buttons {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        background: #075e54;
+    }
 
-    prevBtn.addEventListener('click', ()=>{ if(currentList.length===0) return; idx = (idx-1 + currentList.length) % currentList.length; showImageList(currentList); });
-    nextBtn.addEventListener('click', ()=>{ if(currentList.length===0) return; idx = (idx+1) % currentList.length; showImageList(currentList); });
-    playBtn.addEventListener('click', ()=>{ if(autoplay) stopAutoplay(); else startAutoplay(); });
+    .top-buttons button {
+        background: white;
+        border: none;
+        padding: 8px 15px;
+        font-size: 14px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
-    // handle uploads (they replace category list)
-    upEasy.addEventListener('change', (e)=>{ handleFiles(e.target.files,'easy'); });
-    upMod.addEventListener('change', (e)=>{ handleFiles(e.target.files,'mod'); });
-    upHard.addEventListener('change', (e)=>{ handleFiles(e.target.files,'hard'); });
+    .members {
+        background: #dfe6e9;
+        padding: 10px;
+        font-size: 16px;
+        text-align: center;
+        font-weight: bold;
+    }
 
-    function handleFiles(files,cat){ if(!files||files.length===0) return; const arr=[]; Array.from(files).forEach(f=>{ const reader=new FileReader(); reader.onload = (ev)=>{ arr.push(ev.target.result); // when all read, assign
-        if(arr.length === files.length){ if(cat==='easy'){ easyImgs = arr; if(currentList===easyImgs) { currentList=easyImgs; idx=0; showImageList(currentList);} }
-                                     if(cat==='mod'){ modImgs = arr; if(currentList===modImgs) { currentList=modImgs; idx=0; showImageList(currentList);} }
-                                     if(cat==='hard'){ hardImgs = arr; if(currentList===hardImgs) { currentList=hardImgs; idx=0; showImageList(currentList);} }
-        }
-      }; reader.readAsDataURL(f); }); }
+    #chat {
+        height: 70vh;
+        overflow-y: auto;
+        padding: 10px;
+    }
 
-    // init with Easy selected
-    setActiveButton(btnEasy);
-    currentList = easyImgs; showImageList(currentList);
+    .bubble {
+        background: white;
+        padding: 8px;
+        margin: 10px 0;
+        max-width: 70%;
+        border-radius: 10px;
+        box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+    }
 
-    // Join modal
-    const joinModal = document.getElementById('joinModal');
-    document.getElementById('openJoin').addEventListener('click', ()=>{ joinModal.classList.add('show'); });
-    document.getElementById('closeJoin').addEventListener('click', ()=>{ joinModal.classList.remove('show'); });
-    document.getElementById('sendReq').addEventListener('click', ()=>{
-      const name = document.getElementById('reqName').value.trim();
-      const whats = document.getElementById('reqWhats').value.trim();
-      if(!name || !whats){ alert('English text here English text here WhatsApp English text here English text here (country code English text here)।'); return; }
-      const text = encodeURIComponent(`Hello Sumanta, I want to join your group.\nName: ${name}\nWhatsApp: ${whats}\nPlease approve.`);
-      const url = `https://wa.me/${SUMANTA}?text=${text}`;
-      window.open(url,'_blank');
-    });
+    .incoming {
+        margin-right: auto;
+    }
 
-    // accessibility: allow keyboard escape to close modal
-    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ joinModal.classList.remove('show'); } });
+    .bubble img {
+        max-width: 100%;
+        border-radius: 10px;
+    }
 
-    // no fake members or fake chats are added anywhere. This viewer shows only uploaded or sample images.
-  </script>
+    .upload-area {
+        background: white;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+    }
+</style>
+</head>
+<body>
+
+<div class="header">Sumantosh Doubt Clinic</div>
+
+<div class="top-buttons">
+    <button onclick="joinGroup()">Join Group</button>
+    <button onclick="adminLogin()">Admin Login</button>
+</div>
+
+<div class="members">Active Members: 600</div>
+
+<div id="chat"></div>
+
+<div class="upload-area">
+    <input type="file" accept="image/*" id="imgInput" onchange="sendPhoto()">
+</div>
+
+<script>
+function joinGroup() {
+    alert("Send your details on WhatsApp to join.");
+}
+
+function adminLogin() {
+    alert("Admin login coming soon.");
+}
+
+function sendPhoto() {
+    let file = document.getElementById("imgInput").files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e) {
+        let chat = document.getElementById("chat");
+
+        let bubble = document.createElement("div");
+        bubble.className = "bubble incoming";
+
+        let img = document.createElement("img");
+        img.src = e.target.result;
+
+        bubble.appendChild(img);
+        chat.appendChild(bubble);
+
+        chat.scrollTop = chat.scrollHeight;
+    };
+
+    reader.readAsDataURL(file);
+}
+</script>
+
 </body>
 </html>
