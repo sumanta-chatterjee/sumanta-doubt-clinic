@@ -3,78 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <title>Sumantosh Doubt Clinic</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #e5ddd5;
-        margin: 0;
-        padding: 0;
-    }
-
-    .header {
-        background: #128c7e;
-        color: white;
-        padding: 15px;
-        text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-    }
-
-    .top-buttons {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px;
-        background: #075e54;
-    }
-
-    .top-buttons button {
-        background: white;
-        border: none;
-        padding: 8px 15px;
-        font-size: 14px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .members {
-        background: #dfe6e9;
-        padding: 10px;
-        font-size: 16px;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    #chat {
-        height: 70vh;
-        overflow-y: auto;
-        padding: 10px;
-    }
-
-    .bubble {
-        background: white;
-        padding: 8px;
-        margin: 10px 0;
-        max-width: 70%;
-        border-radius: 10px;
-        box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
-    }
-
-    .incoming {
-        margin-right: auto;
-    }
-
-    .bubble img {
-        max-width: 100%;
-        border-radius: 10px;
-    }
-
-    .upload-area {
-        background: white;
-        padding: 10px;
-        display: flex;
-        justify-content: center;
-    }
+    body { font-family: Arial, sans-serif; background: #e5ddd5; margin: 0; padding: 0; }
+    .header { background: #128c7e; color: white; padding: 15px; text-align: center; font-size: 22px; font-weight: bold; }
+    .top-buttons { display: flex; justify-content: space-between; padding: 10px; background: #075e54; }
+    .top-buttons button { background: white; border: none; padding: 8px 15px; font-size: 14px; border-radius: 5px; cursor: pointer; }
+    .members { background: #dfe6e9; padding: 10px; text-align: center; font-size: 16px; font-weight: bold; }
+    #chat { height: 70vh; overflow-y: auto; padding: 10px; }
+    .bubble { background: #fff; padding: 8px; margin: 10px 0; max-width: 70%; border-radius: 10px; box-shadow: 0 0 4px rgba(0,0,0,0.2); }
+    .incoming { margin-right: auto; }
+    .bubble img { max-width: 100%; border-radius: 10px; }
 </style>
+
 </head>
 <body>
 
@@ -89,10 +32,6 @@
 
 <div id="chat"></div>
 
-<div class="upload-area">
-    <input type="file" accept="image/*" id="imgInput" onchange="sendPhoto()">
-</div>
-
 <script>
 function joinGroup() {
     alert("Send your details on WhatsApp to join.");
@@ -102,27 +41,54 @@ function adminLogin() {
     alert("Admin login coming soon.");
 }
 
-function sendPhoto() {
-    let file = document.getElementById("imgInput").files[0];
-    let reader = new FileReader();
+// -------- PDF RENDERING --------
+let pdfDoc = null;
+let totalPages = 0;
+let pagesAsImages = [];
 
-    reader.onload = function(e) {
-        let chat = document.getElementById("chat");
+pdfjsLib.getDocument('pdf/questions.pdf').promise.then(function(pdf) {
+    pdfDoc = pdf;
+    totalPages = pdf.numPages;
 
-        let bubble = document.createElement("div");
-        bubble.className = "bubble incoming";
+    for (let i = 1; i <= totalPages; i++) {
+        renderPageAsImage(i);
+    }
+});
 
-        let img = document.createElement("img");
-        img.src = e.target.result;
+function renderPageAsImage(pageNum) {
+    pdfDoc.getPage(pageNum).then(function(page) {
+        let viewport = page.getViewport({scale: 1.5});
+        let canvas = document.createElement("canvas");
+        let ctx = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-        bubble.appendChild(img);
-        chat.appendChild(bubble);
-
-        chat.scrollTop = chat.scrollHeight;
-    };
-
-    reader.readAsDataURL(file);
+        page.render({canvasContext: ctx, viewport: viewport}).promise.then(function() {
+            pagesAsImages.push(canvas.toDataURL());
+        });
+    });
 }
+
+// -------- SEND RANDOM IMAGE MESSAGE --------
+function sendRandomQuestion() {
+    if (pagesAsImages.length === 0) return;
+
+    let randomImage = pagesAsImages[Math.floor(Math.random() * pagesAsImages.length)];
+
+    let chat = document.getElementById("chat");
+    let bubble = document.createElement("div");
+    bubble.className = "bubble incoming";
+
+    let img = document.createElement("img");
+    img.src = randomImage;
+
+    bubble.appendChild(img);
+    chat.appendChild(bubble);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// Every 30 seconds send a random page as image
+setInterval(sendRandomQuestion, 30000);
 </script>
 
 </body>
