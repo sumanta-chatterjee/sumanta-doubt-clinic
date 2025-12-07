@@ -46,49 +46,55 @@ let pdfDoc = null;
 let totalPages = 0;
 let pagesAsImages = [];
 
-pdfjsLib.getDocument('pdf/questions.pdf').promise.then(function(pdf) {
+pdfjsLib.getDocument('./pdf/questions.pdf').promise.then(function(pdf) {
     pdfDoc = pdf;
     totalPages = pdf.numPages;
+    console.log("PDF loaded. Total pages: " + totalPages);
 
     for (let i = 1; i <= totalPages; i++) {
         renderPageAsImage(i);
     }
-});
+}).catch(err => console.log("PDF NOT FOUND:", err));
 
 function renderPageAsImage(pageNum) {
     pdfDoc.getPage(pageNum).then(function(page) {
-        let viewport = page.getViewport({scale: 1.5});
+        let viewport = page.getViewport({ scale: 1.5 });
         let canvas = document.createElement("canvas");
         let ctx = canvas.getContext("2d");
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        page.render({canvasContext: ctx, viewport: viewport}).promise.then(function() {
+        page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function() {
             pagesAsImages.push(canvas.toDataURL());
+            console.log("Page converted:", pageNum);
         });
     });
 }
 
-// -------- SEND RANDOM IMAGE MESSAGE --------
+// -------- AUTO SEND RANDOM IMAGE --------
 function sendRandomQuestion() {
-    if (pagesAsImages.length === 0) return;
+    if (pagesAsImages.length === 0) {
+        console.log("Images not ready yet");
+        return;
+    }
 
-    let randomImage = pagesAsImages[Math.floor(Math.random() * pagesAsImages.length)];
+    let imgURL = pagesAsImages[Math.floor(Math.random() * pagesAsImages.length)];
 
     let chat = document.getElementById("chat");
     let bubble = document.createElement("div");
     bubble.className = "bubble incoming";
 
     let img = document.createElement("img");
-    img.src = randomImage;
+    img.src = imgURL;
 
     bubble.appendChild(img);
     chat.appendChild(bubble);
     chat.scrollTop = chat.scrollHeight;
 }
 
-// Every 30 seconds send a random page as image
+// every 30 seconds
 setInterval(sendRandomQuestion, 30000);
+
 </script>
 
 </body>
